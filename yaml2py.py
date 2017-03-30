@@ -8,7 +8,7 @@ import collections
 
 # Print usage message
 def usage(name):
-    print "Usage: %s [-h|--help] -M|--module module_name -t|--title module_title  [-D|--dir yaml_dir] [-D|--description module_description]" % name
+    print "Usage: python %s [-h|--help] -M|--module module_name -t|--title module_title  [-D|--dir yaml_dir] [-D|--description module_description]" % name
     print "    -h|--help                           : show this message"
     print "    -D|--dir yaml_dir                   : Yaml file directory"
     print "    -M|--module module_name             : module name"
