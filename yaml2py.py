@@ -8,13 +8,13 @@ import collections
 
 # Print usage message
 def usage(name):
-    print "Usage: python %s [-h|--help] -M|--module module_name [-t|--title module_title]  [-D|--dir yaml_dir] [-D|--description module_description]" % name
+    print "Usage: python %s [-h|--help] -M|--module module_name [-T|--title module_title]  [-P|--path yaml_dir] [-D|--description module_description]" % name
     print "    -h|--help                           : show this message"
     print "    -M|--module module_name             : module name"
-    print "    -D|--dir yaml_dir                   : Yaml file directory"
-    print "    -t|--title module_title             : module title to write on the file header."
+    print "    -P|--path yaml_dir                  : Yaml file directory"
+    print "    -T|--title module_title             : module title to write on the file header."
     print "                                          If empty, \"PyRogue \" + the description found on YAML will be used as description."
-    print "    -d|--description module_description : module description to write on the file header."
+    print "    -D|--description module_description : module description to write on the file header."
     print "                                          If empty, \"PyRogue \" + the description found on YAML will be used as description."
     print ""
 
@@ -352,7 +352,7 @@ def main(argv):
     description = ""
 
     try:
-        opts, args = getopt.getopt(argv, "hM:D:p:t:",["module=", "path=", "description=", "title="])
+        opts, args = getopt.getopt(argv, "hM:P:D:T:",["module=", "path=", "description=", "title="])
     except getopt.GetoptError:
         print "Invalid option!"
         usage(sys.argv[0])
@@ -364,11 +364,11 @@ def main(argv):
             sys.exit()
         elif opt in ("-M", "--module"):
             moduleName = arg
-        elif opt in ("-p", "--path"):
+        elif opt in ("-P", "--path"):
             fileDir = arg
-        elif opt in ("-d", "--description"):
+        elif opt in ("-D", "--description"):
             description = arg
-        elif opt in ("-t", "--title"):
+        elif opt in ("-T", "--title"):
             title = arg
 
     # The module name is mandatory
