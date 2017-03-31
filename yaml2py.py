@@ -8,13 +8,14 @@ import collections
 
 # Print usage message
 def usage(name):
-    print "Usage: python %s [-h|--help] -M|--module module_name -t|--title module_title  [-D|--dir yaml_dir] [-D|--description module_description]" % name
+    print "Usage: python %s [-h|--help] -M|--module module_name [-t|--title module_title]  [-D|--dir yaml_dir] [-D|--description module_description]" % name
     print "    -h|--help                           : show this message"
-    print "    -D|--dir yaml_dir                   : Yaml file directory"
     print "    -M|--module module_name             : module name"
-    print "    -t|--title module_title             : module title to write on the file header"
+    print "    -D|--dir yaml_dir                   : Yaml file directory"
+    print "    -t|--title module_title             : module title to write on the file header."
+    print "                                          If empty, \"PyRogue \" + the description found on YAML will be used as description."
     print "    -d|--description module_description : module description to write on the file header."
-    print "                                          If empty, the title will be used as description."
+    print "                                          If empty, \"PyRogue \" + the description found on YAML will be used as description."
     print ""
 
 # Add File header
@@ -43,7 +44,7 @@ def printHeader(title, module, date, description):
 
 # Class to process a YAML file
 class YamlDoc:
-    def __init__(self, fileName):
+    def __init__(self, fileName, title, description, date):
         
         # Open YAML file
         file = open(fileName, "r")
@@ -56,7 +57,7 @@ class YamlDoc:
         k = doc.keys()
         self.yM = []
         for module in k:
-            self.yM.append(YamlModule(doc, module))
+            self.yM.append(YamlModule(doc, module, title, description, date))
 
         # Close the file
         file.close()
@@ -69,7 +70,7 @@ class YamlDoc:
 
 # Class to process a module on the YAML file
 class YamlModule:
-    def __init__(self, doc, module):
+    def __init__(self, doc, module, title, description, date):
         # Indentation levels
         #
         #--------->|<- L2
@@ -92,20 +93,31 @@ class YamlModule:
         self.variableCount = 0
         self.commandCount  = 0
 
-        # This is the module name
+        # Module details
         self.name = module
+        self.title = title
+        self.description = description
+        self.date = date
 
         # Process the module's nodes
         if (doc[module]):
 
             # These are the nodes we are looking for
-            self.template = collections.OrderedDict([("description",""),("size","")])
+            self.template = collections.OrderedDict([("description","")])
 
             # Look for the nodes on the module and put them on the template
             for f in self.template:
                 if (f in doc[module]):
                     if (f in doc[module]):
                         self.template[f] = doc[module][f]
+
+            # If not title was specify, use "PyRogue " + the description found on YAML
+            if not self.title:
+                self.title = "PyRogue %s" % self.template["description"]
+
+            # If not description was specify, use "PyRogue " + the description found on YAML
+            if not self.description:
+                self.description = "PyRogue %s" % self.template["description"]
 
             # Now look for children on the module
             if "children" in doc[module]:
@@ -136,8 +148,11 @@ class YamlModule:
     def getPyClass(self):
         # Get the class only if this method has children 
         if self.hasChildren:
-            print "class %s.py(pr.Device):" % self.name
-            print "%sdef __init__(self, name=\"%s.py\", memBase=None, offset=0x0, hidden=False):" % (' '.ljust(self.identL1), self.name)
+            # Print the file header
+            printHeader(title=self.title, module=self.name, date=self.date, description=self.description)
+
+            print "class %s(pr.Device):" % self.name
+            print "%sdef __init__(self, name=\"%s\", memBase=None, offset=0x0, hidden=False):" % (' '.ljust(self.identL1), self.name)
             print "%ssuper(self.__class__, self).__init__(name, \"%s\", memBase, offset, hidden)" % (' '.ljust(self.identL2), self.template["description"])
             print ""
             
@@ -362,12 +377,6 @@ def main(argv):
         usage(sys.argv[0])
         sys.exit(2)
 
-    # The module title is mandatory
-    if not title:
-        print "Must especify a module title!"
-        usage(sys.argv[0])
-        sys.exit(2)
-
     # Verify if the directory exist
     if not os.path.exists(fileDir):
         print "Directory \"%s\" doesn't exist!" % fileDir
@@ -382,19 +391,12 @@ def main(argv):
         print "Yaml file \"%s\" doesn't exist!" % yamlFile
         print ""
         sys.exit(2)
-    
-    # If no description was specify, use title as description
-    if not description:
-        description = title
 
     # Get today's date
     date = "%d-%02d-%02d" % (datetime.date.today().year, datetime.date.today().month, datetime.date.today().day)
 
-    # Print the file header
-    printHeader(title=title, module=moduleName, date=date, description=description)
-
     # Process the YAML file
-    yD = YamlDoc(yamlFile)
+    yD = YamlDoc(yamlFile, title, description, date)
 
     # print the equivalent Python class
     yD.getPyClass()
