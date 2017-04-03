@@ -8,10 +8,11 @@ import collections
 
 # Print usage message
 def usage(name):
-    print "Usage: python %s [-h|--help] -M|--module module_name [-T|--title module_title]  [-P|--path yaml_dir] [-D|--description module_description]" % name
+    print "Usage: python %s [-h|--help] -M|--module module_name [-T|--title module_title]  [-Y|--yamlDir yaml_dir] [P|--pythonDir python_dir] [-D|--description module_description]" % name
     print "    -h|--help                           : show this message"
     print "    -M|--module module_name             : module name"
-    print "    -P|--path yaml_dir                  : Yaml file directory"
+    print "    -Y|--yamlDir yaml_dir               : Yaml input file directory"
+    print "    -P|--pythonDir python_dir           : Python output file directory"
     print "    -T|--title module_title             : module title to write on the file header."
     print "                                          If empty, \"PyRogue \" + the description found on YAML will be used as description."
     print "    -D|--description module_description : module description to write on the file header."
@@ -19,38 +20,38 @@ def usage(name):
     print ""
 
 # Add File header
-def printHeader(title, module, date, description):
-    print "#!/usr/bin/env python"
-    print "#-----------------------------------------------------------------------------"
-    print "# Title      : %s" % title
-    print "#-----------------------------------------------------------------------------"
-    print "# File       : %s.py" % module
-    print "# Created    : %s" % date
-    print "#-----------------------------------------------------------------------------"
-    print "# Description:"
-    print "# %s" % description
-    print "#-----------------------------------------------------------------------------"
-    print "# This file is part of the rogue software platform. It is subject to "
-    print "# the license terms in the LICENSE.txt file found in the top-level directory "
-    print "# of this distribution and at: "
-    print "#    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. "
-    print "# No part of the rogue software platform, including this file, may be "
-    print "# copied, modified, propagated, or distributed except according to the terms "
-    print "# contained in the LICENSE.txt file."
-    print "#-----------------------------------------------------------------------------"
-    print ""
-    print "import pyrogue as pr"
-    print ""
+def printHeader(file, title, module, date, description):
+    file.write("#!/usr/bin/env python\n")
+    file.write("#-----------------------------------------------------------------------------\n")
+    file.write("# Title      : %s\n" % title)
+    file.write("#-----------------------------------------------------------------------------\n")
+    file.write("# File       : %s.py\n" % module)
+    file.write("# Created    : %s\n" % date)
+    file.write("#-----------------------------------------------------------------------------\n")
+    file.write("# Description:\n")
+    file.write("# %s\n" % description)
+    file.write("#-----------------------------------------------------------------------------\n")
+    file.write("# This file is part of the rogue software platform. It is subject to\n")
+    file.write("# the license terms in the LICENSE.txt file found in the top-level directory\n")
+    file.write("# of this distribution and at:\n")
+    file.write("#    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.\n")
+    file.write("# No part of the rogue software platform, including this file, may be\n")
+    file.write("# copied, modified, propagated, or distributed except according to the terms\n")
+    file.write("# contained in the LICENSE.txt file.\n")
+    file.write("#-----------------------------------------------------------------------------\n")
+    file.write("\n")
+    file.write("import pyrogue as pr\n")
+    file.write("\n")
 
 # Class to process a YAML file
 class YamlDoc:
-    def __init__(self, fileName, title, description, date):
+    def __init__(self, yamlFile, title, description, date):
         
         # Open YAML file
-        file = open(fileName, "r")
+        yFile = open(yamlFile, "r")
 
         # Read the YAML definitions
-        doc = yaml.load(file)
+        doc = yaml.load(yFile)
     
         # Get all the modules defined on the file
         # Usually there will be just one. 
@@ -60,13 +61,13 @@ class YamlDoc:
             self.yM.append(YamlModule(doc, module, title, description, date))
 
         # Close the file
-        file.close()
+        yFile.close()
 
     # Method to get the equivalent python class
-    def getPyClass(self):
+    def getPyClass(self, file):
         # For every module, call its getPyClass method
         for ym in self.yM:
-            ym.getPyClass()
+            ym.getPyClass(file)
 
 # Class to process a module on the YAML file
 class YamlModule:
@@ -145,38 +146,38 @@ class YamlModule:
                             self.commandCount += 1
 
     # Method to get the equivalent python class
-    def getPyClass(self):
+    def getPyClass(self, file):
         # Get the class only if this method has children 
         if self.hasChildren:
             # Print the file header
-            printHeader(title=self.title, module=self.name, date=self.date, description=self.description)
+            printHeader(file=file, title=self.title, module=self.name, date=self.date, description=self.description)
 
-            print "class %s(pr.Device):" % self.name
-            print "%sdef __init__(self, name=\"%s\", memBase=None, offset=0x0, hidden=False):" % (' '.ljust(self.identL1), self.name)
-            print "%ssuper(self.__class__, self).__init__(name, \"%s\", memBase, offset, hidden)" % (' '.ljust(self.identL2), self.template["description"])
-            print ""
+            file.write("class %s(pr.Device):\n" % self.name)
+            file.write("%sdef __init__(self, name=\"%s\", memBase=None, offset=0x0, hidden=False):\n" % (' '.ljust(self.identL1), self.name))
+            file.write("%ssuper(self.__class__, self).__init__(name, \"%s\", memBase, offset, hidden)\n" % (' '.ljust(self.identL2), self.template["description"]))
+            file.write("\n")
             
             # If there were variables on this modules, print them
             if self.variableCount:
-                print "%s##############################" % ' '.ljust(self.identL2)
-                print "%s# Variables" % ' '.ljust(self.identL2)
-                print "%s##############################" % ' '.ljust(self.identL2)
-                print ""
+                file.write("%s##############################\n" % ' '.ljust(self.identL2))
+                file.write("%s# Variables\n" % ' '.ljust(self.identL2))
+                file.write("%s##############################\n" % ' '.ljust(self.identL2))
+                file.write("\n")
 
                 # For every variable child, call its getPyClass method
                 for yc in self.yCV:
-                    yc.getPyClass()
+                    yc.getPyClass(file)
 
             # If there were commands on this modules, print them
             if self.commandCount:
-                print "%s##############################" % ' '.ljust(self.identL2)
-                print "%s# Commands" % ' '.ljust(self.identL2)
-                print "%s##############################" % ' '.ljust(self.identL2)
-                print ""
+                file.write("%s##############################\n" % ' '.ljust(self.identL2))
+                file.write("%s# Commands\n" % ' '.ljust(self.identL2))
+                file.write("%s##############################\n" % ' '.ljust(self.identL2))
+                file.write("\n")
 
                 # For every command child, call its getPyClass method
                 for yc in self.yCC:
-                    yc.getPyClass()                
+                    yc.getPyClass(file)                
 
 # Method to process one child of the module on the YAML file
 class YamlChild:
@@ -265,75 +266,75 @@ class YamlChild:
                 self.seq.append((ySeq[i]["entry"], ySeq[i]["value"]))
 
     # Method to get the equivalent python class
-    def getPyClass (self):
+    def getPyClass (self, file):
         if self.isVariable:
-            self.getPyVariablesClass()
+            self.getPyVariablesClass(file)
 
         if self.isCommand:
-            self.getPyCommandsClass()
+            self.getPyCommandsClass(file)
 
     # Method to get the equivalent python class for Variables (IntFields)
-    def getPyVariablesClass(self):
+    def getPyVariablesClass(self, file):
         # Print the variable definition line
-        print "%s%s%s%s= '%s'," % (
+        file.write("%s%s%s%s= '%s',\n" % (
             ' '.ljust(self.identL1), 
             'self.add(pr.Variable'.ljust(self.identL2 - self.identL1), 
             '('.ljust(self.identL3 - self.identL2),
             'name'.ljust(self.identL4 - self.identL3), 
-            self.name)
+            self.name))
 
         # Print the variable properties
         for node in self.template:
             if self.formats[node] is 's':
-                print "%s%s= '%s'," % (
+                file.write("%s%s= '%s',\n" % (
                     ' '.ljust(self.identL3), 
                     node.ljust(self.identL4 - self.identL3), 
-                    self.template[node])
+                    self.template[node]))
             elif self.formats[node] is 'h':
-                print "%s%s=  0x%02X," % (
+                file.write("%s%s=  0x%02X,\n" % (
                     ' '.ljust(self.identL3), 
                     node.ljust(self.identL4 - self.identL3), 
-                    self.template[node])
+                    self.template[node]))
             else:
-                print "%s%s=  %d," % (
+                file.write("%s%s=  %d,\n" % (
                     ' '.ljust(self.identL3),
                     node.ljust(self.identL4 - self.identL3), 
-                    self.template[node])
+                    self.template[node]))
         
         # Print the end of variable elements
-        print "%s))" % ' '.ljust(self.identL2)
-        print ""
+        file.write("%s))\n" % ' '.ljust(self.identL2))
+        file.write("\n")
 
     # Method to get the equivalent python class for Commands (SequenceCommand)
-    def getPyCommandsClass(self):
+    def getPyCommandsClass(self, file):
         # Printf the comamnd definition line
-        print "%s%s%s%s= '%s'," % (
+        file.write("%s%s%s%s= '%s',\n" % (
             ' '.ljust(self.identL1), 
             'self.add(pr.Command'.ljust(self.identL2 - self.identL1), 
             '('.ljust(self.identL3 - self.identL2),
             'name'.ljust(self.identL4 - self.identL3), 
-            self.name)
+            self.name))
 
         # Print the command properties
         for node in self.template:
-            print "%s%s= '%s'," % (
+            file.write("%s%s= '%s'," % (
                 ' '.ljust(self.identL3), 
                 node.ljust(self.identL4 - self.identL3), 
-                self.template[node])
+                self.template[node]))
 
         # Print the command sequence
-        print "%s%s= \"\"\"\\" % (
+        file.write("%s%s= \"\"\"\\\n" % (
             ' '.ljust(self.identL3), 
-            'function'.ljust(self.identL4 - self.identL3))
+            'function'.ljust(self.identL4 - self.identL3)))
         
         for i in range(len(self.seq)):
-            print "%sself.%s.set(%d)" % (' '.ljust(self.identL5), self.seq[i][0], self.seq[i][1])
+            file.write("%sself.%s.set(%d)\n" % (' '.ljust(self.identL5), self.seq[i][0], self.seq[i][1]))
 
-        print "%s\"\"\"" % (' '.ljust(self.identL5))
+        file.write("%s\"\"\"\n" % (' '.ljust(self.identL5)))
 
         # Print the end of commands elements
-        print "%s))" % ' '.ljust(self.identL2)
-        print ""
+        file.write("%s))\n" % ' '.ljust(self.identL2))
+        file.write("\n")
 
     # Method to get if this child is a variable
     def isVariable(self):
@@ -346,13 +347,14 @@ class YamlChild:
 # Main
 def main(argv):
     # Process input arguments
-    fileDir     = "."
+    yamlDir     = "."
+    pythonDir   = "."
     moduleName  = ""
     title       = ""
     description = ""
 
     try:
-        opts, args = getopt.getopt(argv, "hM:P:D:T:",["module=", "path=", "description=", "title="])
+        opts, args = getopt.getopt(argv, "hM:Y:P:D:T:",["module=", "yamlDir=", "pythonDir=", "description=", "title="])
     except getopt.GetoptError:
         print "Invalid option!"
         usage(sys.argv[0])
@@ -364,12 +366,14 @@ def main(argv):
             sys.exit()
         elif opt in ("-M", "--module"):
             moduleName = arg
-        elif opt in ("-P", "--path"):
-            fileDir = arg
+        elif opt in ("-Y", "--yamlDir"):
+            yamlDir = arg
         elif opt in ("-D", "--description"):
             description = arg
         elif opt in ("-T", "--title"):
             title = arg
+        elif opt in ("-P", "--pythonDir"):
+            pythonDir = arg
 
     # The module name is mandatory
     if not moduleName:
@@ -377,14 +381,23 @@ def main(argv):
         usage(sys.argv[0])
         sys.exit(2)
 
-    # Verify if the directory exist
-    if not os.path.exists(fileDir):
-        print "Directory \"%s\" doesn't exist!" % fileDir
+    # Verify if the input directory exist
+    if not os.path.exists(yamlDir):
+        print "Directory \"%s\" doesn't exist!" % yamlDir
+        print ""
+        sys.exit(2)     
+
+    # Verify if the output directory exist
+    if not os.path.exists(pythonDir):
+        print "Directory \"%s\" doesn't exist!" % pythonDir
         print ""
         sys.exit(2)     
 
     # The YAML file full path
-    yamlFile = fileDir + '/' + moduleName + ".yaml"
+    yamlFile = yamlDir + '/' + moduleName + ".yaml"
+
+    # The python file full path
+    pythonFile = pythonDir + '/' + moduleName + ".py"
 
     # Verify is YAML file exist
     if not os.path.isfile(yamlFile):
@@ -398,8 +411,16 @@ def main(argv):
     # Process the YAML file
     yD = YamlDoc(yamlFile, title, description, date)
 
+    # open the output python file
+    pFile = open(pythonFile, "w")
+
     # print the equivalent Python class
-    yD.getPyClass()
+    yD.getPyClass(pFile)
+
+    # Close the output python file
+    pFile.close()
+
+    print "Module %s converted from %s to %s" % (moduleName, yamlFile, pythonFile)
 
 # Call main 
 if __name__ == "__main__":
