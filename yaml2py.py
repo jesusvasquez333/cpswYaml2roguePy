@@ -87,6 +87,9 @@ class YamlModule:
         self.identL1 = 4
         self.identL2 = 8
 
+        # Assume this module it's not defined
+        self.isDefined = False
+
         # Assume this module doesn't have children
         self.hasChildren = False
 
@@ -102,6 +105,9 @@ class YamlModule:
 
         # Process the module's nodes
         if (doc[module]):
+
+            # The module is defined
+            self.isDefined = True
 
             # These are the nodes we are looking for
             self.template = collections.OrderedDict([("description","")])
@@ -147,8 +153,10 @@ class YamlModule:
 
     # Method to get the equivalent python class
     def getPyClass(self, file):
-        # Get the class only if this method has children 
-        if self.hasChildren:
+
+        # Get the class only if the module is defined
+        if self.isDefined:
+
             # Print the file header
             printHeader(file=file, title=self.title, module=self.name, date=self.date, description=self.description)
 
@@ -157,27 +165,30 @@ class YamlModule:
             file.write("%ssuper(self.__class__, self).__init__(name, \"%s\", memBase, offset, hidden)\n" % (' '.ljust(self.identL2), self.template["description"]))
             file.write("\n")
             
-            # If there were variables on this modules, print them
-            if self.variableCount:
-                file.write("%s##############################\n" % ' '.ljust(self.identL2))
-                file.write("%s# Variables\n" % ' '.ljust(self.identL2))
-                file.write("%s##############################\n" % ' '.ljust(self.identL2))
-                file.write("\n")
+            # Get the variables and commands only if this method has children 
+            if self.hasChildren:
 
-                # For every variable child, call its getPyClass method
-                for yc in self.yCV:
-                    yc.getPyClass(file)
+                # If there were variables on this modules, print them
+                if self.variableCount:
+                    file.write("%s##############################\n" % ' '.ljust(self.identL2))
+                    file.write("%s# Variables\n" % ' '.ljust(self.identL2))
+                    file.write("%s##############################\n" % ' '.ljust(self.identL2))
+                    file.write("\n")
 
-            # If there were commands on this modules, print them
-            if self.commandCount:
-                file.write("%s##############################\n" % ' '.ljust(self.identL2))
-                file.write("%s# Commands\n" % ' '.ljust(self.identL2))
-                file.write("%s##############################\n" % ' '.ljust(self.identL2))
-                file.write("\n")
+                    # For every variable child, call its getPyClass method
+                    for yc in self.yCV:
+                        yc.getPyClass(file)
 
-                # For every command child, call its getPyClass method
-                for yc in self.yCC:
-                    yc.getPyClass(file)                
+                # If there were commands on this modules, print them
+                if self.commandCount:
+                    file.write("%s##############################\n" % ' '.ljust(self.identL2))
+                    file.write("%s# Commands\n" % ' '.ljust(self.identL2))
+                    file.write("%s##############################\n" % ' '.ljust(self.identL2))
+                    file.write("\n")
+
+                    # For every command child, call its getPyClass method
+                    for yc in self.yCC:
+                        yc.getPyClass(file)                
 
 # Method to process one child of the module on the YAML file
 class YamlChild:
