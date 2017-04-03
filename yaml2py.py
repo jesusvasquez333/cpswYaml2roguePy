@@ -276,7 +276,7 @@ class YamlChild:
     # Method to get the equivalent python class for Variables (IntFields)
     def getPyVariablesClass(self, file):
         # Print the variable definition line
-        file.write("%s%s%s%s= '%s',\n" % (
+        file.write("%s%s%s%s= \"%s\",\n" % (
             ' '.ljust(self.identL1), 
             'self.add(pr.Variable'.ljust(self.identL2 - self.identL1), 
             '('.ljust(self.identL3 - self.identL2),
@@ -286,7 +286,7 @@ class YamlChild:
         # Print the variable properties
         for node in self.template:
             if self.formats[node] is 's':
-                file.write("%s%s= '%s',\n" % (
+                file.write("%s%s= \"%s\",\n" % (
                     ' '.ljust(self.identL3), 
                     node.ljust(self.identL4 - self.identL3), 
                     self.template[node]))
@@ -308,7 +308,7 @@ class YamlChild:
     # Method to get the equivalent python class for Commands (SequenceCommand)
     def getPyCommandsClass(self, file):
         # Printf the comamnd definition line
-        file.write("%s%s%s%s= '%s',\n" % (
+        file.write("%s%s%s%s= \"%s\",\n" % (
             ' '.ljust(self.identL1), 
             'self.add(pr.Command'.ljust(self.identL2 - self.identL1), 
             '('.ljust(self.identL3 - self.identL2),
@@ -317,7 +317,7 @@ class YamlChild:
 
         # Print the command properties
         for node in self.template:
-            file.write("%s%s= '%s'," % (
+            file.write("%s%s= \"%s\",\n" % (
                 ' '.ljust(self.identL3), 
                 node.ljust(self.identL4 - self.identL3), 
                 self.template[node]))
