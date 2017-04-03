@@ -43,12 +43,27 @@ def printHeader(file, title, module, date, description):
     file.write("import pyrogue as pr\n")
     file.write("\n")
 
+
+# Setup support for ordered dicts so we do not lose ordering
+# when importing from YAML
+def dict_representer(dumper, data):
+    return dumper.represent_mapping(_mapping_tag, data.iteritems())
+
+def dict_constructor(loader, node):
+    return collections.OrderedDict(loader.construct_pairs(node))
+
 # Class to process a YAML file
 class YamlDoc:
     def __init__(self, yamlFile, title, description, date):
         
         # Open YAML file
         yFile = open(yamlFile, "r")
+
+        # Setup support for ordered dicts so we do not lose ordering
+        # when importing from YAML
+        _mapping_tag = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
+        yaml.add_representer(collections.OrderedDict, dict_representer)
+        yaml.add_constructor(_mapping_tag, dict_constructor)
 
         # Read the YAML definitions
         doc = yaml.load(yFile)
