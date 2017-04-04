@@ -176,8 +176,8 @@ class YamlModule:
             printHeader(file=file, title=self.title, module=self.name, date=self.date, description=self.description)
 
             file.write("class %s(pr.Device):\n" % self.name)
-            file.write("%sdef __init__(self, name=\"%s\", memBase=None, offset=0x0, hidden=False):\n" % (' '.ljust(self.identL1), self.name))
-            file.write("%ssuper(self.__class__, self).__init__(name, \"%s\", memBase, offset, hidden)\n" % (' '.ljust(self.identL2), self.template["description"]))
+            file.write("%sdef __init__(self, name=\"%s\", description=\"%s\", memBase=None, offset=0x0, hidden=False):\n" % (' '.ljust(self.identL1), self.name, self.template["description"]))
+            file.write("%ssuper(self.__class__, self).__init__(name, description, memBase, offset, hidden)\n" % (' '.ljust(self.identL2)))
             file.write("\n")
             
             # Get the variables and commands only if this method has children 
