@@ -222,17 +222,25 @@ class YamlChild:
         #   |                    |       |            |      |
         #   |self.add(pr.Variable|(      |name        |=     |'name',
         #   |                    |       |description |=     |'description',
-        #   |                    |))
+        #   |                    |       |enum        |=     |{
+        #   |                    |       |            |      |    |0 : "Zero"
+        #   |                    |       |            |      |}   |
+        #   |                    |))                              |
+        #-------------------------------------------------------->|<-L6
         #
         self.identL1 = 8
         self.identL2 = 28
         self.identL3 = 32
         self.identL4 = 45
         self.identL5 = 47
+        self.identL6 = 50
 
         # Type of child (Only Variable and Command are supported)
         self.isVariable = False
         self.isCommand  = False
+
+        # Variable of ENUM type
+        self.isEnum = False
 
         # This is the child name
         self.name = var
@@ -270,6 +278,16 @@ class YamlChild:
             for vf in var_fields:
                 if (vf in doc[module]["children"][var]):
                     self.template[cpsw_rogue_var_field_name_dict[vf]] = doc[module]["children"][var][vf]
+
+            # Check if this variable is of ENUM type
+            if ("enums" in doc[module]["children"][var]):
+                self.isEnum = True
+                self.enum = []
+                self.template["mode"] = "enum"
+                yEnum = doc[module]["children"][var]["enums"]
+                for i in range(len(yEnum)):
+                    self.enum.append((yEnum[i]["value"], yEnum[i]["name"]))
+
 
         # Process YAML's SequenceCommand classes which map to "Command" in Python
         if yClass == "SequenceCommand":
@@ -327,6 +345,13 @@ class YamlChild:
                     node.ljust(self.identL4 - self.identL3), 
                     self.template[node]))
         
+        # Print the ENUM dictionary for ENUM type variables
+        if self.isEnum:
+            file.write("%s%s= {\n" % (' '.ljust(self.identL3), "enum".ljust(self.identL4 - self.identL3)))
+            for i in range(len(self.enum)):
+                file.write("%s%d : \"%s\",\n" % (' '.ljust(self.identL6), self.enum[i][0], self.enum[i][1]))
+            file.write("%s},\n" % ' '.ljust(self.identL5))
+
         # Print the end of variable elements
         file.write("%s))\n" % ' '.ljust(self.identL2))
         file.write("\n")
