@@ -252,14 +252,14 @@ class YamlChild:
             self.formats = {"description":'s', "offset":'h', "bitSize":'d', "bitOffset":'h', "base":'s', "mode":'s', "nelms":'d', "stride":'d'}
 
             # These are the nodes we are looking for in the child
-            var_fields = ["description", "sizeBits", "base", "mode"]
+            var_fields = ["description", "sizeBits", "base", "mode", "lsBit"]
             # These are the map between this YAML nodes name to Python node name
-            cpsw_rogue_var_field_name_dict = {"description":"description", "sizeBits":"bitSize", "base":"base", "mode":"mode"}
+            cpsw_rogue_var_field_name_dict = {"description":"description", "sizeBits":"bitSize", "base":"base", "mode":"mode", "lsBit":"bitOffset"}
 
             # These are the nodes we are looking for under the "at" container
-            var_at_fields = ["offset", "bitOffset", "nelms", "stride"]
+            var_at_fields = ["offset", "nelms", "stride"]
             # These are the map between this YAML nodes name to Python node name
-            cpsw_rogue_var_at_field_name_dict = {"offset":"offset", "bitOffset":"bitOffset", "nelms":"nelms", "stride":"stride"}
+            cpsw_rogue_var_at_field_name_dict = {"offset":"offset", "nelms":"nelms", "stride":"stride"}
 
             # Look for the node under "at" and put then on the template
             for vaf in var_at_fields:
