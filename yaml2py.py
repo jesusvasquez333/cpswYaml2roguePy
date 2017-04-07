@@ -283,7 +283,7 @@ class YamlChild:
             if ("enums" in doc[module]["children"][var]):
                 self.isEnum = True
                 self.enum = []
-                self.template["mode"] = "enum"
+                self.template["base"] = "enum"
                 yEnum = doc[module]["children"][var]["enums"]
                 for i in range(len(yEnum)):
                     self.enum.append((yEnum[i]["value"], yEnum[i]["name"]))
