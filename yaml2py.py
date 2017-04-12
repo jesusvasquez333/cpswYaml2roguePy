@@ -226,6 +226,8 @@ class YamlModule:
                         '='.ljust(self.identL6 - self.identL5),
                         self.template[node]))
 
+            file.write("%s):\n" % ' '.ljust(self.identL3))
+
                 # self, name=\"%s\", description=\"%s\", memBase=None, offset=0x0, hidden=False):\n" % (' '.ljust(self.identL1), self.name, self.template["description"]))
             file.write("%ssuper(self.__class__, self).__init__(name, description, memBase, offset, hidden)\n" % (' '.ljust(self.identL2)))
             file.write("\n")
