@@ -89,18 +89,29 @@ class YamlModule:
     def __init__(self, doc, module, title, description, date):
         # Indentation levels
         #
-        #--------->|<- L2
-        #----->|<- L1 |
-        #class |      |    module.py(pr.Device):
-        #      |def   |    __init__(...):
-        #             |super(...)
-        #             |
-        #             |##############################
-        #             |# Variables
-        #             |##############################
+        #----------------------------------------------------------------->|<-L6
+        #---------------------------------------------------------->|<-L5  |
+        #------------------------------------------------>|<-L4     |      |
+        #----------------------------------------->|<-L3  |         |      |
+        #------------------------------->|<- L2    |      |         |      |
+        #------------------------>|<- L1 |         |      |         |      |
+        #class module(pr.Device): |      |         |      |         |      |
+        #                         |def   |__init__ |(     |self     |      |
+        #                         |                |      |name     |=     |"name"
+        #                         |                |      |...
+        #                         |                |):
+        #                         |super(...)
+        #                         |
+        #                         |##############################
+        #                         |# Variables
+        #                         |##############################
         #
         self.identL1 = 4
         self.identL2 = 8
+        self.identL3 = 16
+        self.identL4 = 20
+        self.identL5 = 32
+        self.identL6 = 34
 
         # Assume this module it's not defined
         self.isDefined = False
@@ -124,11 +135,17 @@ class YamlModule:
             # The module is defined
             self.isDefined = True
 
+            # These are the node we want to have on the python class
+            self.template = collections.OrderedDict([("name",self.name), ("description",""), ("memBase","None"), ("offset",0), ("hidden","False"), ])
+            # And these are the formats we will use to print each node
+            # s: string, us: unquoted string, d: decimal, h: hex
+            self.formats = {"name":'s', "description":'s', "memBase":'us', "offset":'h', "hidden":'us'}
+
             # These are the nodes we are looking for
-            self.template = collections.OrderedDict([("description","")])
+            fields = ["name", "description", "offset"]
 
             # Look for the nodes on the module and put them on the template
-            for f in self.template:
+            for f in fields:
                 if (f in doc[module]):
                     if (f in doc[module]):
                         self.template[f] = doc[module][f]
@@ -176,7 +193,40 @@ class YamlModule:
             printHeader(file=file, title=self.title, module=self.name, date=self.date, description=self.description)
 
             file.write("class %s(pr.Device):\n" % self.name)
-            file.write("%sdef __init__(self, name=\"%s\", description=\"%s\", memBase=None, offset=0x0, hidden=False):\n" % (' '.ljust(self.identL1), self.name, self.template["description"]))
+            file.write("%s%s%s%s%s\n" % (
+                ' '.ljust(self.identL1),
+                "def".ljust(self.identL2 - self.identL1),
+                "__init__".ljust(self.identL3 - self.identL2),
+                "(".ljust(self.identL4 - self.identL3),
+                "self,".ljust(self.identL5 - self.identL4)))
+
+            for node in self.template:
+                if self.formats[node] is 's':
+                    file.write("%s%s%s%s,\n" % (
+                        ' '.ljust(self.identL4),
+                        node.ljust(self.identL5 - self.identL4),
+                        '='.ljust(self.identL6 - self.identL5),
+                        ('\"' + self.template[node] + '\"')))
+                if self.formats[node] is 'us':
+                    file.write("%s%s%s %s,\n" % (
+                        ' '.ljust(self.identL4),
+                        node.ljust(self.identL5 - self.identL4),
+                        '='.ljust(self.identL6 - self.identL5),
+                        self.template[node]))
+                elif self.formats[node] is 'h':
+                    file.write("%s%s%s 0x%02X,\n" % (
+                        ' '.ljust(self.identL4),
+                        node.ljust(self.identL5 - self.identL4),
+                        '='.ljust(self.identL6 - self.identL5),
+                        self.template[node]))
+                elif self.formats[node] is 'd':
+                    file.write("%s%s%s %d,\n" % (
+                        ' '.ljust(self.identL4),
+                        node.ljust(self.identL5 - self.identL4),
+                        '='.ljust(self.identL6 - self.identL5),
+                        self.template[node]))
+
+                # self, name=\"%s\", description=\"%s\", memBase=None, offset=0x0, hidden=False):\n" % (' '.ljust(self.identL1), self.name, self.template["description"]))
             file.write("%ssuper(self.__class__, self).__init__(name, description, memBase, offset, hidden)\n" % (' '.ljust(self.identL2)))
             file.write("\n")
             
