@@ -195,10 +195,10 @@ class YamlModule:
             file.write("class %s(pr.Device):\n" % self.name)
             file.write("%s%s%s%s%s\n" % (
                 ' '.ljust(self.identL1),
-                "def".ljust(self.identL2 - self.identL1),
-                "__init__".ljust(self.identL3 - self.identL2),
-                "(".ljust(self.identL4 - self.identL3),
-                "self,".ljust(self.identL5 - self.identL4)))
+                'def'.ljust(self.identL2 - self.identL1),
+                '__init__'.ljust(self.identL3 - self.identL2),
+                '('.ljust(self.identL4 - self.identL3),
+                'self,'.ljust(self.identL5 - self.identL4)))
 
             for node in self.template:
                 if self.formats[node] is 's':
