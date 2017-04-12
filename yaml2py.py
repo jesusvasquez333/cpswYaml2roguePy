@@ -124,10 +124,10 @@ class YamlModule:
         self.commandCount  = 0
 
         # Module details
-        self.name = module
-        self.title = title
+        self.name        = module
+        self.title       = title
         self.description = description
-        self.date = date
+        self.date        = date
 
         # Process the module's nodes
         if (doc[module]):
