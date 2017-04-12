@@ -89,22 +89,23 @@ class YamlModule:
     def __init__(self, doc, module, title, description, date):
         # Indentation levels
         #
-        #----------------------------------------------------------------->|<-L6
-        #---------------------------------------------------------->|<-L5  |
-        #------------------------------------------------>|<-L4     |      |
-        #----------------------------------------->|<-L3  |         |      |
-        #------------------------------->|<- L2    |      |         |      |
-        #------------------------>|<- L1 |         |      |         |      |
-        #class module(pr.Device): |      |         |      |         |      |
-        #                         |def   |__init__ |(     |self     |      |
-        #                         |                |      |name     |=     |"name"
-        #                         |                |      |...
-        #                         |                |):
-        #                         |super(...)
-        #                         |
-        #                         |##############################
-        #                         |# Variables
-        #                         |##############################
+        #------------------------------------------------------------------>|<-L6
+        #----------------------------------------------------------->|<-L5  |
+        #------------------------------------------------->|<-L4     |      |
+        #------------------------------------------>|<-L3  |         |      |
+        #------------------------>|<- L1            |      |         |      |
+        #class module(pr.Device): |                 |      |         |      |
+        #                         |def __init__(    |      |self     |      |
+        #                                           |      |name     |=     |"name"
+        #                                           |      |...
+        #                                           |):
+        #
+        #                                 |super(...)
+        #                                 |
+        #                                 |##############################
+        #                                 |# Variables
+        #                                 |##############################
+        #-------------------------------->|<- L2 
         #
         self.identL1 = 4
         self.identL2 = 8
@@ -193,11 +194,9 @@ class YamlModule:
             printHeader(file=file, title=self.title, module=self.name, date=self.date, description=self.description)
 
             file.write("class %s(pr.Device):\n" % self.name)
-            file.write("%s%s%s%s%s\n" % (
+            file.write("%s%s%s\n" % (
                 ' '.ljust(self.identL1),
-                'def'.ljust(self.identL2 - self.identL1),
-                '__init__'.ljust(self.identL3 - self.identL2),
-                '('.ljust(self.identL4 - self.identL3),
+                'def __init__('.ljust(self.identL4 - self.identL1),
                 'self,'.ljust(self.identL5 - self.identL4)))
 
             for node in self.template:
@@ -264,31 +263,31 @@ class YamlModule:
 class YamlChild:
     def __init__(self, doc, module, var):
         # Indentation levels
-        #----------------------------------------------->|<- L5
-        #---------------------------------------->|<-L4  |
-        #--------------------------->|<-L3        |      |
-        #------------------->|<-L2   |            |      |
-        #-->|<-L1            |       |            |      |
-        #   |self.addCommand |(      |name        |=     |'name',
-        #   |                |       |function    |=     |"""\
-        #   |                |       |            |      | entry(value)
-        #   |                |       |            |      | """
-        #   |                |)      |            |      |
-        #   |                |       |            |      |
-        #   |self.addVariable|(      |name        |=     |'name',
-        #   |                |       |description |=     |'description',
-        #   |                |       |enum        |=     |{
-        #   |                |       |            |      |    |0 : "Zero"
-        #   |                |       |            |      |}   |
-        #   |                |)                               |
+        #-------------------------------------------------->|<- L5
+        #------------------------------------------->|<-L4  |
+        #------------------------------>|<-L3        |      |
+        #---------------------->|<-L2   |            |      |
+        #-->|<-L1               |       |            |      |
+        #   |self.addCommand(   |       |name        |=     |'name',
+        #   |                   |       |function    |=     |"""\
+        #   |                   |       |            |      | entry(value)
+        #   |                   |       |            |      | """
+        #   |                   |)      |            |      |
+        #   |                   |       |            |      |
+        #   |self.addVariable(  |       |name        |=     |'name',
+        #   |                   |       |description |=     |'description',
+        #   |                   |       |enum        |=     |{
+        #   |                   |       |            |      |    |0 : "Zero"
+        #   |                   |       |            |      |}   |
+        #   |                   |)                               |
         #---------------------------------------------------->|<-L6
         #
         self.identL1 = 8
-        self.identL2 = 28
-        self.identL3 = 32
-        self.identL4 = 45
-        self.identL5 = 47
-        self.identL6 = 50
+        self.identL2 = 24
+        self.identL3 = 28
+        self.identL4 = 41
+        self.identL5 = 43
+        self.identL6 = 46
 
         # Type of child (Only Variable and Command are supported)
         self.isVariable = False
@@ -388,10 +387,9 @@ class YamlChild:
     # Method to get the equivalent python class for Variables (IntFields)
     def getPyVariablesClass(self, file):
         # Print the variable definition line
-        file.write("%s%s%s%s= \"%s\",\n" % (
+        file.write("%s%s%s= \"%s\",\n" % (
             ' '.ljust(self.identL1), 
-            ('self.addVariable' + ('s' if self.isArray else '')).ljust(self.identL2 - self.identL1),
-            '('.ljust(self.identL3 - self.identL2),
+            ('self.addVariable' + ('s' if self.isArray else '') + '(').ljust(self.identL3 - self.identL1),
             'name'.ljust(self.identL4 - self.identL3), 
             self.name))
 
@@ -427,10 +425,9 @@ class YamlChild:
     # Method to get the equivalent python class for Commands (SequenceCommand)
     def getPyCommandsClass(self, file):
         # Printf the comamnd definition line
-        file.write("%s%s%s%s= \"%s\",\n" % (
+        file.write("%s%s%s= \"%s\",\n" % (
             ' '.ljust(self.identL1), 
-            'self.addCommand'.ljust(self.identL2 - self.identL1), 
-            '('.ljust(self.identL3 - self.identL2),
+            'self.addCommand('.ljust(self.identL3 - self.identL1), 
             'name'.ljust(self.identL4 - self.identL3), 
             self.name))
 
