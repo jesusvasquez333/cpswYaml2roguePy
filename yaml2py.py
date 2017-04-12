@@ -228,7 +228,11 @@ class YamlModule:
 
             file.write("%s):\n" % ' '.ljust(self.identL3))
 
-            file.write("%ssuper(self.__class__, self).__init__(name, description, memBase, offset, hidden)\n" % (' '.ljust(self.identL2)))
+            file.write("%ssuper(self.__class__, self).__init__(" % (' '.ljust(self.identL2)))
+            for node in self.template:
+                file.write("%s, " % node)
+            file.write(")\n")
+
             file.write("\n")
             
             # Get the variables and commands only if this method has children 
