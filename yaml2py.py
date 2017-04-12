@@ -209,24 +209,24 @@ class YamlModule:
 class YamlChild:
     def __init__(self, doc, module, var):
         # Indentation levels
-        #--------------------------------------------------->|<- L5
-        #-------------------------------------------->|<-L4  |
-        #------------------------------->|<-L3        |      |
-        #----------------------->|<-L2   |            |      |
-        #-->|<-L1                |       |            |      |
-        #   |self.add(pr.Command |(      |name        |=     |'name',
-        #   |                    |       |function    |=     |"""\
-        #   |                    |       |            |      | entry(value)
-        #   |                    |       |            |      | """
-        #   |                    |))     |            |      |
-        #   |                    |       |            |      |
-        #   |self.add(pr.Variable|(      |name        |=     |'name',
-        #   |                    |       |description |=     |'description',
-        #   |                    |       |enum        |=     |{
-        #   |                    |       |            |      |    |0 : "Zero"
-        #   |                    |       |            |      |}   |
-        #   |                    |))                              |
-        #-------------------------------------------------------->|<-L6
+        #----------------------------------------------->|<- L5
+        #---------------------------------------->|<-L4  |
+        #--------------------------->|<-L3        |      |
+        #------------------->|<-L2   |            |      |
+        #-->|<-L1            |       |            |      |
+        #   |self.addCommand |(      |name        |=     |'name',
+        #   |                |       |function    |=     |"""\
+        #   |                |       |            |      | entry(value)
+        #   |                |       |            |      | """
+        #   |                |)      |            |      |
+        #   |                |       |            |      |
+        #   |self.addVariable|(      |name        |=     |'name',
+        #   |                |       |description |=     |'description',
+        #   |                |       |enum        |=     |{
+        #   |                |       |            |      |    |0 : "Zero"
+        #   |                |       |            |      |}   |
+        #   |                |)                               |
+        #---------------------------------------------------->|<-L6
         #
         self.identL1 = 8
         self.identL2 = 28
@@ -241,6 +241,9 @@ class YamlChild:
 
         # Variable of ENUM type
         self.isEnum = False
+
+        # Array of variables
+        self.isArray = False
 
         # This is the child name
         self.name = var
@@ -257,7 +260,7 @@ class YamlChild:
             # These are the node we want to have on the python class
             self.template = collections.OrderedDict([("description",""),("offset",0),("bitSize",32),("bitOffset",0),("base","hex"),("mode","RO")])
             # And these are the formats we will use to print each node
-            self.formats = {"description":'s', "offset":'h', "bitSize":'d', "bitOffset":'h', "base":'s', "mode":'s', "nelms":'d', "stride":'d'}
+            self.formats = {"description":'s', "offset":'h', "bitSize":'d', "bitOffset":'h', "base":'s', "mode":'s', "number":'d', "stride":'d'}
 
             # These are the nodes we are looking for in the child
             var_fields = ["description", "sizeBits", "base", "mode", "lsBit"]
@@ -267,7 +270,7 @@ class YamlChild:
             # These are the nodes we are looking for under the "at" container
             var_at_fields = ["offset", "nelms", "stride"]
             # These are the map between this YAML nodes name to Python node name
-            cpsw_rogue_var_at_field_name_dict = {"offset":"offset", "nelms":"nelms", "stride":"stride"}
+            cpsw_rogue_var_at_field_name_dict = {"offset":"offset", "nelms":"number", "stride":"stride"}
 
             # Look for the node under "at" and put then on the template
             for vaf in var_at_fields:
@@ -287,6 +290,16 @@ class YamlChild:
                 yEnum = doc[module]["children"][var]["enums"]
                 for i in range(len(yEnum)):
                     self.enum.append((yEnum[i]["value"], yEnum[i]["name"]))
+
+            # Check if this is an array of variables
+            if ("nelms" in doc[module]["children"][var]["at"]):
+                self.isArray = True
+
+                # 'stride' is optional on YAML but mandatory on PyRogue
+                # So let's ckeck if it was present on YAML. If not, use 4 as default
+                if ("stride" not in doc[module]["children"][var]["at"]):
+                    self.template["stride"] = 4
+
 
 
         # Process YAML's SequenceCommand classes which map to "Command" in Python
@@ -322,7 +335,7 @@ class YamlChild:
         # Print the variable definition line
         file.write("%s%s%s%s= \"%s\",\n" % (
             ' '.ljust(self.identL1), 
-            'self.add(pr.Variable'.ljust(self.identL2 - self.identL1), 
+            ('self.addVariable' + ('s' if self.isArray else '')).ljust(self.identL2 - self.identL1),
             '('.ljust(self.identL3 - self.identL2),
             'name'.ljust(self.identL4 - self.identL3), 
             self.name))
@@ -353,7 +366,7 @@ class YamlChild:
             file.write("%s},\n" % ' '.ljust(self.identL5))
 
         # Print the end of variable elements
-        file.write("%s))\n" % ' '.ljust(self.identL2))
+        file.write("%s)\n" % ' '.ljust(self.identL2))
         file.write("\n")
 
     # Method to get the equivalent python class for Commands (SequenceCommand)
@@ -361,7 +374,7 @@ class YamlChild:
         # Printf the comamnd definition line
         file.write("%s%s%s%s= \"%s\",\n" % (
             ' '.ljust(self.identL1), 
-            'self.add(pr.Command'.ljust(self.identL2 - self.identL1), 
+            'self.addCommand'.ljust(self.identL2 - self.identL1), 
             '('.ljust(self.identL3 - self.identL2),
             'name'.ljust(self.identL4 - self.identL3), 
             self.name))
@@ -384,7 +397,7 @@ class YamlChild:
         file.write("%s\"\"\"\n" % (' '.ljust(self.identL5)))
 
         # Print the end of commands elements
-        file.write("%s))\n" % ' '.ljust(self.identL2))
+        file.write("%s)\n" % ' '.ljust(self.identL2))
         file.write("\n")
 
     # Method to get if this child is a variable
